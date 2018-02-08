@@ -10,6 +10,72 @@
 #include <unity/lib/gl_sframe.hpp>
 #include <utility>
 
+// BEGIN EXPERIMENTAL IMPLEMENTATION
+
+// Specializations of this template define the inner C++ type for each public
+// C-API struct T
+template <typename T>
+struct tc_wrapped_type;
+
+// Abstract base class for objects actually returned to clients. The virtual
+// destructor could facilitate a unified release method...
+struct tc_impl_base {
+  virtual ~tc_impl_base() = default;
+};
+
+// Templated derived class for each C API struct T. Inherits from tc_impl_base
+// to enable dynamic_cast. Inherits from T to enable conversions.
+template <typename T>
+struct tc_impl : public tc_impl_base, public T {
+  template <typename... Args>
+  tc_impl(Args&&... args) : value(std::forward<Args>(args)...) {
+    // Set the "type field" of the public struct.
+    T::impl = this;
+  }
+
+  // Contain an instance of the wrapped type.
+  typename tc_wrapped_type<T>::type value;
+};
+
+// Convenient helpers for extracting a reference to the wrapped value given only
+// a pointer to public C-API struct. Performs type checking in case the client
+// performed some invalid cast.
+template <typename T>
+typename tc_wrapped_type<T>::type& get_value(T* wrapper) {
+  auto* impl = dynamic_cast<tc_impl<T>*>(wrapper->impl);
+  if (impl == nullptr) {
+    log_and_throw(std::string(typeid(T).name()) +
+                  " value does not contain implementation of expected type " +
+                  typeid(tc_impl<T>).name());
+  }
+  return impl->value;
+}
+template <typename T>
+const typename tc_wrapped_type<T>::type& get_value(const T* wrapper) {
+  const auto* impl = dynamic_cast<const tc_impl<T>*>(wrapper->impl);
+  if (impl == nullptr) {
+    log_and_throw(std::string(typeid(T).name()) +
+                  " value does not contain implementation of expected type " +
+                  typeid(tc_impl<T>).name());
+  }
+  return impl->value;
+}
+
+// Must be defined for each type... worth defining a macro?
+template <>
+struct tc_wrapped_type<tc_datetime> {
+  using type = turi::flex_date_time;
+};
+
+// Probably not worth defining this... Call sites should just instantiate the
+// tc_impl template, right?
+template <typename... Args>
+tc_datetime* new_tc_datetime(Args&&... args) {
+  return new tc_impl<tc_datetime>(std::forward<Args>(args)...);
+}
+
+// END EXPERIMENTAL IMPLEMENTATION
+
 struct capi_struct_type_info {
   virtual const char* name() const = 0;
   virtual void free(const void* v) = 0;
@@ -66,7 +132,6 @@ struct capi_struct_type_info {
 // TODO: make this more full featured than just a string error message.
 DECLARE_CAPI_WRAPPER_STRUCT(tc_error, std::string);
 
-DECLARE_CAPI_WRAPPER_STRUCT(tc_datetime, turi::flex_date_time);
 DECLARE_CAPI_WRAPPER_STRUCT(tc_flex_dict, turi::flex_dict);
 DECLARE_CAPI_WRAPPER_STRUCT(tc_flex_list, turi::flex_list);
 DECLARE_CAPI_WRAPPER_STRUCT(tc_flex_image, turi::flex_image);

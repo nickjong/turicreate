@@ -72,7 +72,7 @@ EXPORT void tc_datetime_set_time_zone_offset(
 
   CHECK_NOT_NULL(error, dt, "Datetime");
 
-  dt->value.set_time_zone_offset(4* n_tz_hour_offset + n_tz_15min_offsets);
+  get_value(dt).set_time_zone_offset(4* n_tz_hour_offset + n_tz_15min_offsets);
 
   ERROR_HANDLE_END(error);
 }
@@ -82,7 +82,7 @@ EXPORT int64_t tc_datetime_get_time_zone_offset_minutes(
 
   CHECK_NOT_NULL(error, dt, "Datetime", 0);
 
-  return dt->value.time_zone_offset() * 15;
+  return get_value(dt).time_zone_offset() * 15;
 
   ERROR_HANDLE_END(error, 0);
 }
@@ -94,7 +94,7 @@ EXPORT void tc_datetime_set_microsecond(
 
   CHECK_NOT_NULL(error, dt, "Datetime");
 
-  dt->value.set_microsecond(microseconds);
+  get_value(dt).set_microsecond(microseconds);
 
   ERROR_HANDLE_END(error);
 }
@@ -104,7 +104,7 @@ EXPORT uint64_t tc_datetime_get_microsecond(
 
   CHECK_NOT_NULL(error, dt, "Datetime", 0);
 
-  return dt->value.microsecond();
+  return get_value(dt).microsecond();
 
   ERROR_HANDLE_END(error, 0);
 }
@@ -117,7 +117,7 @@ EXPORT void tc_datetime_set_timestamp(
 
   CHECK_NOT_NULL(error, dt, "Datetime");
 
-  dt->value.set_posix_timestamp(d);
+  get_value(dt).set_posix_timestamp(d);
 
   ERROR_HANDLE_END(error);
 }
@@ -126,7 +126,7 @@ EXPORT int64_t tc_datetime_get_timestamp(tc_datetime* dt, tc_error** error) {
 
   CHECK_NOT_NULL(error, dt, "Datetime", 0);
 
-  return dt->value.posix_timestamp();
+  return get_value(dt).posix_timestamp();
 
   ERROR_HANDLE_END(error, 0);
 }
@@ -139,7 +139,7 @@ EXPORT void tc_datetime_set_highres_timestamp(
 
   CHECK_NOT_NULL(error, dt, "Datetime");
 
-  dt->value.set_microsecond_res_timestamp(d);
+  get_value(dt).set_microsecond_res_timestamp(d);
 
   ERROR_HANDLE_END(error);
 }
@@ -149,7 +149,7 @@ EXPORT double tc_datetime_get_highres_timestamp(
 
   CHECK_NOT_NULL(error, dt, "Datetime", 0.0);
 
-  return dt->value.microsecond_res_timestamp();
+  return get_value(dt).microsecond_res_timestamp();
 
   ERROR_HANDLE_END(error, 0.0);
 }
@@ -162,7 +162,7 @@ EXPORT int tc_datetime_less_than(
   CHECK_NOT_NULL(error, dt1, "Datetime", false);
   CHECK_NOT_NULL(error, dt2, "Datetime", false);
 
-  return dt1->value < dt2->value;
+  return get_value(dt1) < get_value(dt2);
 
   ERROR_HANDLE_END(error, 0);
 }
@@ -175,14 +175,14 @@ EXPORT int tc_datetime_equal(
   CHECK_NOT_NULL(error, dt1, "Datetime", false);
   CHECK_NOT_NULL(error, dt2, "Datetime", false);
 
-  return dt1->value == dt2->value;
+  return get_value(dt1) == get_value(dt2);
 
   ERROR_HANDLE_END(error, 0);
 }
 
 // Destructor
 EXPORT void tc_datetime_destroy(tc_datetime* dt) {
-  delete dt;
+  delete dt->impl;
 }
 
 }  // extern "C"

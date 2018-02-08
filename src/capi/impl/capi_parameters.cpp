@@ -142,7 +142,7 @@ EXPORT void tc_parameters_add_datetime(tc_parameters* params, const char* name, 
   CHECK_NOT_NULL(error, params, "tc_parameters");
   CHECK_NOT_NULL(error, dt, "tc_datetime");
 
-  params->value[name] = turi::to_variant(dt->value);
+  params->value[name] = turi::to_variant(get_value(dt));
 
   ERROR_HANDLE_END(error); 
 }

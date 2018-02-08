@@ -15,6 +15,9 @@ extern "C" {
 /*                                                                            */
 /******************************************************************************/
 
+// Forward reference to polymorphic base class for implementations.
+struct tc_impl_base;
+
 // Error message struct
 struct tc_error_struct;
 typedef struct tc_error_struct tc_error;
@@ -33,8 +36,8 @@ struct tc_flex_dict_struct;
 typedef struct tc_flex_dict_struct tc_flex_dict;
 
 // datetime
-struct tc_datetime_struct;
-typedef struct tc_datetime_struct tc_datetime;
+struct tc_datetime { struct tc_impl_base* impl; };
+typedef struct tc_datetime tc_datetime;
 
 // Image
 struct tc_flex_image_struct;

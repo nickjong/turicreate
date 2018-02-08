@@ -12,7 +12,9 @@ BOOST_AUTO_TEST_CASE(test_tc_datetime_create_empty) {
   TS_ASSERT_EQUALS(error, nullptr);
   TS_ASSERT_DIFFERS(dt, nullptr);
 
-  TS_ASSERT(dt->value == turi::flex_date_time());
+  TS_ASSERT(get_value(dt) == turi::flex_date_time());
+
+  tc_datetime_destroy(dt);
 }
 
 BOOST_AUTO_TEST_CASE(test_tc_datetime_create_from_posix_timestamp) {
@@ -24,7 +26,7 @@ BOOST_AUTO_TEST_CASE(test_tc_datetime_create_from_posix_timestamp) {
   TS_ASSERT_EQUALS(error, nullptr);
   TS_ASSERT_DIFFERS(dt, nullptr);
 
-  TS_ASSERT(dt->value == turi::flex_date_time(TIMESTAMP));
+  TS_ASSERT(get_value(dt) == turi::flex_date_time(TIMESTAMP));
 }
 
 BOOST_AUTO_TEST_CASE(test_tc_datetime_create_from_posix_highres_timestamp) {
@@ -39,7 +41,7 @@ BOOST_AUTO_TEST_CASE(test_tc_datetime_create_from_posix_highres_timestamp) {
 
   turi::flex_date_time expected;
   expected.set_microsecond_res_timestamp(TIMESTAMP);
-  TS_ASSERT(dt->value == expected);
+  TS_ASSERT(get_value(dt) == expected);
 }
 
 #include <iostream>
@@ -54,7 +56,7 @@ BOOST_AUTO_TEST_CASE(test_tc_datetime_create_from_string) {
   TS_ASSERT_EQUALS(error, nullptr);
   TS_ASSERT_DIFFERS(dt, nullptr);
 
-  TS_ASSERT(dt->value == expected.get<turi::flex_date_time>());
+  TS_ASSERT(get_value(dt) == expected.get<turi::flex_date_time>());
 }
 
 BOOST_AUTO_TEST_CASE(test_tc_datetime_set_time_zone_offset) {
@@ -66,7 +68,7 @@ BOOST_AUTO_TEST_CASE(test_tc_datetime_set_time_zone_offset) {
   tc_datetime_set_time_zone_offset(
       dt, hour_offset, quarter_hour_offsets, &error);
   TS_ASSERT_EQUALS(error, nullptr);
-  TS_ASSERT_EQUALS(dt->value.time_zone_offset(),
+  TS_ASSERT_EQUALS(get_value(dt).time_zone_offset(),
                    hour_offset * 4 + quarter_hour_offsets);
 
   hour_offset = 0;
@@ -74,14 +76,14 @@ BOOST_AUTO_TEST_CASE(test_tc_datetime_set_time_zone_offset) {
   tc_datetime_set_time_zone_offset(
       dt, hour_offset, quarter_hour_offsets, &error);
   TS_ASSERT_EQUALS(error, nullptr);
-  TS_ASSERT_EQUALS(dt->value.time_zone_offset(),
+  TS_ASSERT_EQUALS(get_value(dt).time_zone_offset(),
                    hour_offset * 4 + quarter_hour_offsets);
 }
 
 BOOST_AUTO_TEST_CASE(test_tc_datetime_get_time_zone_offset_minutes) {
   tc_error* error = nullptr;
   tc_datetime* dt = tc_datetime_create_empty(&error);
-  dt->value.set_time_zone_offset(5);
+  get_value(dt).set_time_zone_offset(5);
   int64_t minutes = tc_datetime_get_time_zone_offset_minutes(dt, &error);
   TS_ASSERT_EQUALS(error, nullptr);
   TS_ASSERT_EQUALS(minutes, 5 * 15);
@@ -94,7 +96,7 @@ BOOST_AUTO_TEST_CASE(test_tc_datetime_set_microsecond) {
   tc_datetime* dt = tc_datetime_create_empty(&error);
   tc_datetime_set_microsecond(dt, MICROS, &error);
   TS_ASSERT_EQUALS(error, nullptr);
-  TS_ASSERT_EQUALS(dt->value.microsecond(), MICROS);
+  TS_ASSERT_EQUALS(get_value(dt).microsecond(), MICROS);
 }
 
 BOOST_AUTO_TEST_CASE(test_tc_datetime_get_microsecond) {
@@ -102,7 +104,7 @@ BOOST_AUTO_TEST_CASE(test_tc_datetime_get_microsecond) {
 
   tc_error* error = nullptr;
   tc_datetime* dt = tc_datetime_create_empty(&error);
-  dt->value.set_microsecond(MICROS);
+  get_value(dt).set_microsecond(MICROS);
   uint64_t micros = tc_datetime_get_microsecond(dt, &error);
   TS_ASSERT_EQUALS(error, nullptr);
   TS_ASSERT_EQUALS(micros, MICROS);
@@ -115,7 +117,7 @@ BOOST_AUTO_TEST_CASE(test_tc_datetime_set_timestamp) {
   tc_datetime* dt = tc_datetime_create_empty(&error);
   tc_datetime_set_timestamp(dt, TIMESTAMP, &error);
   TS_ASSERT_EQUALS(error, nullptr);
-  TS_ASSERT_EQUALS(dt->value.posix_timestamp(), TIMESTAMP);
+  TS_ASSERT_EQUALS(get_value(dt).posix_timestamp(), TIMESTAMP);
 }
 
 BOOST_AUTO_TEST_CASE(test_tc_datetime_get_timestamp) {
@@ -123,7 +125,7 @@ BOOST_AUTO_TEST_CASE(test_tc_datetime_get_timestamp) {
 
   tc_error* error = nullptr;
   tc_datetime* dt = tc_datetime_create_empty(&error);
-  dt->value.set_posix_timestamp(TIMESTAMP);
+  get_value(dt).set_posix_timestamp(TIMESTAMP);
   int64_t ts = tc_datetime_get_timestamp(dt, &error);
   TS_ASSERT_EQUALS(error, nullptr);
   TS_ASSERT_EQUALS(ts, TIMESTAMP);
@@ -136,7 +138,7 @@ BOOST_AUTO_TEST_CASE(test_tc_datetime_set_highres_timestamp) {
   tc_datetime* dt = tc_datetime_create_empty(&error);
   tc_datetime_set_highres_timestamp(dt, TIMESTAMP, &error);
   TS_ASSERT_EQUALS(error, nullptr);
-  TS_ASSERT_DELTA(dt->value.microsecond_res_timestamp(), TIMESTAMP, 0.000002);
+  TS_ASSERT_DELTA(get_value(dt).microsecond_res_timestamp(), TIMESTAMP, 0.000002);
 }
 
 
@@ -145,7 +147,7 @@ BOOST_AUTO_TEST_CASE(test_tc_datetime_get_highres_timestamp) {
 
   tc_error* error = nullptr;
   tc_datetime* dt = tc_datetime_create_empty(&error);
-  dt->value.set_microsecond_res_timestamp(TIMESTAMP);
+  get_value(dt).set_microsecond_res_timestamp(TIMESTAMP);
   double ts = tc_datetime_get_highres_timestamp(dt, &error);
   TS_ASSERT_EQUALS(error, nullptr);
   TS_ASSERT_DELTA(ts, TIMESTAMP, 0.000002);

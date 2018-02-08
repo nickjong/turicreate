@@ -4,7 +4,6 @@
   capi_struct_type_info_##struct_name capi_struct_type_info_##struct_name##_inst
 
 DEFINE_CAPI_WRAPPER_STRUCT_TYPE_INFO(tc_error);
-DEFINE_CAPI_WRAPPER_STRUCT_TYPE_INFO(tc_datetime);
 DEFINE_CAPI_WRAPPER_STRUCT_TYPE_INFO(tc_flex_dict);
 DEFINE_CAPI_WRAPPER_STRUCT_TYPE_INFO(tc_flex_list);
 DEFINE_CAPI_WRAPPER_STRUCT_TYPE_INFO(tc_flex_image);

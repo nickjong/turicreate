@@ -86,9 +86,9 @@ EXPORT tc_variant* tc_variant_create_from_flex_dict(const tc_flex_dict* td, tc_e
 EXPORT tc_variant* tc_variant_create_from_datetime(const tc_datetime* dt, tc_error** error){
   ERROR_HANDLE_START();
 
-  CHECK_NOT_NULL(error, turi::flexible_type(dt->value), "Flex Datetime", NULL);
+  CHECK_NOT_NULL(error, turi::flexible_type(get_value(dt)), "Flex Datetime", NULL);
 
-  return new_tc_variant(turi::flexible_type(dt->value));
+  return new_tc_variant(turi::flexible_type(get_value(dt)));
 
   ERROR_HANDLE_END(error, NULL);
 }

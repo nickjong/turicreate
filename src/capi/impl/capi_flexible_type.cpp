@@ -80,7 +80,7 @@ EXPORT tc_flexible_type* tc_ft_create_from_datetime(const tc_datetime* dt, tc_er
   
   CHECK_NOT_NULL(error, dt, "tc_datetime", NULL);
 
-  return new_tc_flexible_type(dt->value);
+  return new_tc_flexible_type(get_value(dt));
 
   ERROR_HANDLE_END(error, NULL);
 }
