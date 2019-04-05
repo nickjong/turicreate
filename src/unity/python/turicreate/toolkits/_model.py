@@ -70,6 +70,7 @@ def load_model(location):
     _internal_url = _make_internal_url(location)
     saved_state = glconnect.get_unity().load_model(_internal_url)
     saved_state = _wrap_function_return(saved_state)
+    print('XXX saved_state: %s' % repr(saved_state))
     # The archive version could be both bytes/unicode
     key = u'archive_version'
     archive_version = saved_state[key] if key in saved_state else saved_state[key.encode()]

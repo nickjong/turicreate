@@ -388,7 +388,9 @@ class ActivityClassifier(_CustomModel):
         # (1,1,W,C) -> (1,C,1,W)
         builder.add_permute(name='permute_layer', dim=(0, 3, 1, 2),
                             input_name='features', output_name='conv_in')
+        print('XXX conv_weight shape %s' % repr(weights['conv_weight'].shape))
         W = _np.expand_dims(weights['conv_weight'], axis=0).transpose((2, 3, 1, 0))
+        print('XXX W shape %s' % repr(W.shape))
         builder.add_convolution(name='conv_layer',
                                 kernel_channels=self.num_features,
                                 output_channels=_net_params['conv_h'],

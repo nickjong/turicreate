@@ -12,6 +12,7 @@
 
 #include <logger/assertions.hpp>
 #include <logger/logger.hpp>
+#include <unity/lib/variant_deep_serialize.hpp>
 #include <unity/toolkits/coreml_export/neural_net_models_exporter.hpp>
 #include <unity/toolkits/evaluation/metrics.hpp>
 #include <util/string_util.hpp>
@@ -32,6 +33,9 @@ using neural_net::xavier_weight_initializer;
 using neural_net::zero_weight_initializer;
 
 using padding_type = model_spec::padding_type;
+
+// The last Python version was 2.
+constexpr size_t ACTIVITY_CLASSIFIER_VERSION = 3;
 
 constexpr size_t NUM_PREDICTIONS_PER_CHUNK = 20;
 
@@ -65,6 +69,26 @@ std::vector<std::string> get_supported_metrics() {
 }
 
 }  // namespace
+
+size_t activity_classifier::get_version() const {
+  return ACTIVITY_CLASSIFIER_VERSION;
+}
+
+void activity_classifier::save_impl(oarchive& oarc) const {
+  variant_deep_save(state, oarc);
+
+  oarc << nn_spec_->export_params_view();
+}
+
+void activity_classifier::load_version(iarchive& iarc, size_t version) {
+  variant_deep_load(state, iarc);
+
+  float_array_map nn_params;
+  iarc >> nn_params;
+
+  nn_spec_ = init_model();
+  nn_spec_->update_params(nn_params);
+}
 
 void activity_classifier::init_options(
     const std::map<std::string, flexible_type>& opts)
@@ -255,6 +279,58 @@ std::shared_ptr<MLModelWrapper> activity_classifier::export_to_coreml(
   }
 
   return model_wrapper;
+}
+
+void activity_classifier::import_from_custom_model(
+    variant_map_type model_data, size_t version) {
+
+  auto it = model_data.find("_pred_model");
+  flex_dict pred_model = variant_get_value<flex_dict>(it->second);
+  model_data.erase(it);
+
+  state.clear();
+  state.insert(model_data.begin(), model_data.end());
+
+  float_array_map nn_params;
+  auto import_mxnet_params = [&](const flex_dict& params) {
+    flex_dict mxnet_data_dict;
+    flex_dict mxnet_shape_dict;
+    for (const auto& params_kv : params) {
+      if (params_kv.first == "data") {
+        mxnet_data_dict = params_kv.second;
+      } else if (params_kv.first == "shapes") {
+        mxnet_shape_dict = params_kv.second;
+      }
+    }
+    auto cmp = [](const flex_dict::value_type& a, const flex_dict::value_type& b) {
+      return a.first < b.first;
+    };
+    std::sort(mxnet_data_dict.begin(), mxnet_data_dict.end(), cmp);
+    std::sort(mxnet_shape_dict.begin(), mxnet_shape_dict.end(), cmp);
+    ASSERT_EQ(mxnet_data_dict.size(), mxnet_shape_dict.size());
+
+    for (size_t i = 0; i < mxnet_data_dict.size(); ++i) {
+      flex_nd_vec mxnet_data_nd = mxnet_data_dict[i].second.to<flex_nd_vec>();
+      flex_nd_vec mxnet_shape_nd = mxnet_shape_dict[i].second.to<flex_nd_vec>();
+      const std::vector<double>& mxnet_data = mxnet_data_nd.elements();
+      const std::vector<double>& mxnet_shape = mxnet_shape_nd.elements();
+      std::vector<float> data(mxnet_data.size());
+      std::vector<size_t> shape(mxnet_shape.size());
+      std::copy(mxnet_data.begin(), mxnet_data.end(), data.begin());
+      std::copy(mxnet_shape.begin(), mxnet_shape.end(), shape.begin());
+      nn_params[mxnet_data_dict[i].first] =
+          shared_float_array::wrap(std::move(data), std::move(shape));
+    }
+  };
+  for (const auto& pred_model_kv : pred_model) {
+    const std::string& key = pred_model_kv.first;
+    if (key == "arg_params" || key == "aux_params") {
+      import_mxnet_params(pred_model_kv.second.get<flex_dict>());
+    }
+  }
+
+  nn_spec_ = init_model();
+  nn_spec_->update_params(nn_params);
 }
 
 std::unique_ptr<data_iterator> activity_classifier::create_iterator(
