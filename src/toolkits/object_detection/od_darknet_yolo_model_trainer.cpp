@@ -437,15 +437,15 @@ DarknetYOLOModelTrainer::DarknetYOLOModelTrainer(
           /* w_out   */ config_.output_width,
           /* config  */ checkpoint.internal_config(),
           /* weights */ checkpoint.internal_weights())),
-      training_augmenter_(
-          std::make_shared<DataAugmenter>(context->create_image_augmenter(
+      training_augmenter_(std::make_shared<DataAugmenter>(
+          compute_context::create_tf()->create_image_augmenter(
               DarknetYOLOTrainingAugmentationOptions(
                   checkpoint.config().batch_size,
                   checkpoint.config().output_height,
                   checkpoint.config().output_width,
                   checkpoint.config().random_seed)))),
-      inference_augmenter_(
-          std::make_shared<DataAugmenter>(context->create_image_augmenter(
+      inference_augmenter_(std::make_shared<DataAugmenter>(
+          compute_context::create_tf()->create_image_augmenter(
               DarknetYOLOInferenceAugmentationOptions(
                   checkpoint.config().batch_size,
                   checkpoint.config().output_height,
