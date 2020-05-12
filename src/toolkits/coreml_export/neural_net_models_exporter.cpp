@@ -248,14 +248,30 @@ void add_non_maximum_suppression_layer(Model* model_nn,
   // The model we're modifying must be a NeuralNetwork.
   ASSERT_TRUE(model_nn->has_neuralnetwork());
 
+  // The NMS layer expects rank-3 inputs. Expand the dimensions of
+  // raw_coordinates and raw_confidence, which are rank-2 for compatibility with
+  // the Model version of NMS.
+  NeuralNetworkLayer* raw_coordinates_expanded =
+      model_nn->mutable_neuralnetwork()->add_layers();
+  raw_coordinates_expanded->set_name("raw_coordinates_expanded");
+  raw_coordinates_expanded->add_input("raw_coordinates");
+  raw_coordinates_expanded->add_output("raw_coordinates_expanded");
+  raw_coordinates_expanded->mutable_expanddims()->add_axes(0);
+  NeuralNetworkLayer* raw_confidence_expanded =
+      model_nn->mutable_neuralnetwork()->add_layers();
+  raw_confidence_expanded->set_name("raw_confidence_expanded");
+  raw_confidence_expanded->add_input("raw_confidence");
+  raw_confidence_expanded->add_output("raw_confidence_expanded");
+  raw_confidence_expanded->mutable_expanddims()->add_axes(0);
+
   // Append the actual NMS layer.
   NeuralNetworkLayer* nms_layer =
       model_nn->mutable_neuralnetwork()->add_layers();
   nms_layer->set_name("nonmaximumsuppression");
 
   // Name the inputs and outputs.
-  nms_layer->add_input("raw_coordinates");
-  nms_layer->add_input("raw_confidence");
+  nms_layer->add_input("raw_coordinates_expanded");
+  nms_layer->add_input("raw_confidence_expanded");
   nms_layer->add_input("iouThreshold");
   nms_layer->add_input("confidenceThreshold");
   nms_layer->add_output("coordinates");
